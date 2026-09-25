@@ -13,20 +13,40 @@ BACKEND = os.path.join(ROOT, "backend")
 REQUIREMENTS = os.path.join(ROOT, "RIVAL_requirements.txt")
 MODULES = ["flask", "requests", "edge_tts", "faster_whisper", "cryptography"]
 
-
-def bar():
-    print("=" * 52)
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+PURPLE = "\033[38;5;141m"
+CYAN = "\033[38;5;51m"
+GREEN = "\033[38;5;42m"
+YELLOW = "\033[38;5;214m"
+WHITE = "\033[38;5;255m"
 
 
 def banner():
-    bar()
-    print("  VOICEAI AVETAAR — Avetaar · Rival")
-    print("  https://t.me/RivalStudio  —  @Avetaar")
-    bar()
+    print()
+    print(PURPLE + "  " + "═" * 54 + RESET)
+    print("  " + BOLD + WHITE + "⚡ VOICEAI AVETAAR" + RESET + "  " + DIM + "· assistant vocal · Iraqi dialect")
+    print("  " + WHITE + "Avetaar" + RESET + "   " + CYAN + "Rival" + RESET + "   " + DIM + "t.me/RivalStudio   @Avetaar")
+    print(PURPLE + "  " + "═" * 54 + RESET)
+
+
+def ok(text):
+    print("  " + GREEN + "✔ " + RESET + text)
+
+
+def warn(text):
+    print("  " + YELLOW + "⚠ " + RESET + text)
 
 
 def is_termux():
     return "termux" in os.environ.get("PREFIX", "").lower() or platform.system().lower() == "android"
+
+
+def termux_prep():
+    if is_termux():
+        print("  " + DIM + "Termux — system preparation ...")
+        subprocess.run(["pkg", "install", "-y", "python-numpy", "python-pip", "ffmpeg"])
 
 
 def missing_modules():
@@ -34,22 +54,21 @@ def missing_modules():
 
 
 def install_dependencies():
-    print(" Installing required packages (first run only) ...")
+    print("  " + DIM + "Installing missing packages ...")
     subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], capture_output=True)
     result = subprocess.run([sys.executable, "-m", "pip", "install", "-r", REQUIREMENTS])
     if result.returncode != 0:
-        print(" Package install failed — check your internet connection and retry")
+        warn("Installation failed — check internet and retry")
         sys.exit(1)
 
 
 def ensure_ffmpeg():
     if shutil.which("ffmpeg"):
-        return
+        return True
     if is_termux():
-        print(" Installing ffmpeg for phone audio formats ...")
         subprocess.run(["pkg", "install", "-y", "ffmpeg"])
-    else:
-        print(" ffmpeg not found — some phone audio formats may not transcribe")
+        return shutil.which("ffmpeg") is not None
+    return False
 
 
 def lan_ip():
@@ -59,35 +78,44 @@ def lan_ip():
         return "127.0.0.1"
 
 
+def link_block(url):
+    print()
+    print(CYAN + "  " + "─" * 54 + RESET)
+    print("  " + BOLD + GREEN + "Avetaar Live ▶" + RESET)
+    print()
+    print("   " + BOLD + CYAN + url + RESET)
+    print()
+    print("  " + DIM + "انسخ الرابط وفتحه بالمتصفح (كروم) على أي جهاز بالشبكة،")
+    print("  " + DIM + "قبل تنبيه الأمان، وتكلم مع Avetaar — صوت أو كتابة.")
+    print(CYAN + "  " + "─" * 54 + RESET)
+
+
 def main():
+    if os.name == "nt":
+        os.system("")
     banner()
-    missing = missing_modules()
-    if missing:
-        print(" Missing: " + ", ".join(missing))
+    termux_prep()
+    if missing_modules():
         install_dependencies()
         if missing_modules():
-            print(" Dependencies still missing — restart this file")
+            warn("المكتبات غير مهيأة — أعد تشغيل الملف")
             sys.exit(1)
     else:
-        print(" All packages ready")
-    ensure_ffmpeg()
+        ok("المكتبات جاهزة")
+    if ensure_ffmpeg():
+        ok("ffmpeg")
+    else:
+        warn("ffmpeg غير موجود — بعض صيغ الصوت بالجوال ما تكدر تتفهم")
 
     sys.path.insert(0, BACKEND)
     import RIVAL_app
     import RIVAL_stt
 
     url = "https://" + lan_ip() + ":8000"
-    print(" Preparing certificates and voice model ...")
+    print("  " + DIM + "تجهيز الشهادة ونموذج الصوت ...")
     threading.Thread(target=RIVAL_stt.preload, daemon=True).start()
 
-    bar()
-    print("  Open this link in Chrome (any device on your network):")
-    print()
-    print("  " + url)
-    print()
-    print("  Copy the link, paste it in your browser, accept the")
-    print("  security warning, then talk to Avetaar by voice or text.")
-    bar()
+    link_block(url)
 
     try:
         webbrowser.open(url)
