@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="RIVAL_banner.png" alt="Avetaar — VoiceAI" width="560">
+</p>
+
 # Avetaar Orb
 
 **Avetaar** is a browser-based voice assistant on the local network:
