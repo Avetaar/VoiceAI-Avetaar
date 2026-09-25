@@ -1,6 +1,4 @@
-# Avetaar Project
-
-## Avetaar Orb
+# VoiceAI Avetaar
 
 **Avetaar** is a voice assistant from the browser for the local network:
 Record a voice message (mic or file) and it's understood by STT,

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="RIVAL_banner.png" alt="Avetaar — VoiceAI" width="560">
+  <img src="RIVAL_banner.png" alt="VoiceAI Avetaar" width="560">
 </p>
 
-# Avetaar Orb
+# VoiceAI Avetaar
 
 **Avetaar** is a browser-based voice assistant on the local network:
 Record a voice message (via mic or by uploading a file) and it gets understood,
@@ -26,7 +26,7 @@ copy the link to Chrome on any device and you can talk to Avetaar.
 ## Structure
 
 ```
-Avetaar-Orb/
+VoiceAI/
 ├── Avetaar.py               Smart launch (install → run → show link)
 ├── RIVAL_requirements.txt
 ├── AVETAAR.md               Identity and rights

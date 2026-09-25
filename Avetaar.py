@@ -20,7 +20,7 @@ def bar():
 
 def banner():
     bar()
-    print("  AVETAAR ORB — Avetaar · Rival")
+    print("  VOICEAI AVETAAR — Avetaar · Rival")
     print("  https://t.me/RivalStudio  —  @Avetaar")
     bar()
 
