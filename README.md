@@ -15,13 +15,21 @@ It comes with an animated **plexus face** that speaks along with the voice.
 
 ## How to run (any environment — Windows / Termux / Linux)
 
+One line:
+
 ```
-python Avetaar.py
+git clone https://github.com/Avetaar/VoiceAI-Avetaar && python VoiceAI-Avetaar/Avetaar.py
 ```
 
-The file installs the necessary libraries automatically, then launches the site,
-displays the link in the terminal, and opens it in the browser —
-copy the link to Chrome on any device and you can talk to Avetaar.
+On Termux:
+
+```
+pkg install git python-ffmpeg && git clone https://github.com/Avetaar/VoiceAI-Avetaar && python VoiceAI-Avetaar/Avetaar.py
+```
+
+The launcher installs the required libraries automatically, starts the site,
+prints the link in the terminal and opens it in the browser —
+copy the link into Chrome on any device and talk with Avetaar.
 
 ## Structure
 
