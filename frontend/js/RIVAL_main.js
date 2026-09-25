@@ -2,7 +2,7 @@ import { state, toast } from "./RIVAL_state.js";
 import { addText } from "./RIVAL_chat.js";
 import { face } from "./RIVAL_face.js";
 import { aiReply } from "./RIVAL_api.js";
-import { wireMic } from "./RIVAL_voice.js";
+import { wireMic, wireUpload, startAuto } from "./RIVAL_voice.js";
 
 (function background() {
   const c = document.getElementById("bgfx");
@@ -45,6 +45,7 @@ import { wireMic } from "./RIVAL_voice.js";
 })();
 
 wireMic();
+wireUpload(document.getElementById("upBtn"), document.getElementById("upFile"));
 
 const txtIn = document.getElementById("txtIn");
 const sendBtn = document.getElementById("sendBtn");
@@ -56,12 +57,17 @@ function sendText() {
   state.inFlight = true;
   aiReply(v).then(() => {
     state.inFlight = false;
+    maybeAutoListen();
   });
 }
 sendBtn.onclick = sendText;
 txtIn.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendText();
 });
+
+function maybeAutoListen() {
+  if (state.openCall && !state.recActive && !state.inFlight) startAuto(true);
+}
 
 const menu = document.getElementById("menu");
 document.getElementById("gearBtn").onclick = (e) => {

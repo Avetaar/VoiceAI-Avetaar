@@ -4,6 +4,15 @@ import { face } from "./RIVAL_face.js";
 
 const API = location.origin;
 
+export async function sttBlob(blob, fileName) {
+  const form = new FormData();
+  form.append("audio", blob, fileName || "rec.webm");
+  const res = await fetch(API + "/api/stt", { method: "POST", body: form });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "STT failed (" + res.status + ")");
+  return data;
+}
+
 export async function ensureSession() {
   if (state.session) return state.session;
   const res = await fetch(API + "/api/session", { method: "POST" });

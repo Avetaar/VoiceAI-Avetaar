@@ -9,7 +9,7 @@ import webbrowser
 ROOT = os.path.dirname(os.path.abspath(__file__))
 BACKEND = os.path.join(ROOT, "backend")
 REQUIREMENTS = os.path.join(ROOT, "RIVAL_requirements.txt")
-MODULES = ["flask", "requests", "edge_tts", "cryptography"]
+MODULES = ["flask", "requests", "edge_tts", "cryptography", "faster_whisper"]
 
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -97,6 +97,8 @@ def main():
 
     url = "https://" + lan_ip() + ":8000"
     print("  " + DIM + "تجهيز الشهادة ...")
+    print("  " + DIM + "أول تشغيل: يجهّز نموذج الفهم (tiny) مرة وحدة في كاش الجهاز — بعد هاذا يعمل بدون إنترنت.")
+    print("  " + DIM + "الجوال لا ينزل أي شيء، ويصعد صوته لكى هنا.")
 
     link_block(url)
 

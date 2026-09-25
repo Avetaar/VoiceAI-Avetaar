@@ -4,12 +4,16 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 CERT_DIR = os.path.join(ROOT_DIR, "backend", "certs")
 PREVIEW_DIR = os.path.join(ROOT_DIR, "backend", "cache")
+UPLOAD_DIR = os.path.join(ROOT_DIR, "backend", "uploads")
 
 HOST = "0.0.0.0"
 PORT = 8000
 
 LLM_API = "https://gptrealtime2.ai/api/generate"
 LLM_HEADERS = {"Content-Type": "application/json", "user-agent": "Mozilla/5.0"}
+
+RIVAL_PROXY = os.environ.get("RIVAL_PROXY", "").strip()
+PROXIES = dict.fromkeys(("http", "https"), "http://" + RIVAL_PROXY) if RIVAL_PROXY else None
 
 VOICES = {
     "bassel": "ar-IQ-BasselNeural",

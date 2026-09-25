@@ -3,5 +3,4 @@ __pycache__/
 backend/certs/
 backend/cache/
 backend/uploads/
-.DS_Store
-Thumbs.db
+*.log

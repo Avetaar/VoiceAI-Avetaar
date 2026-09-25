@@ -1,10 +1,14 @@
-const API = location.origin;
-
 export const state = {
   session: null,
   inFlight: false,
   curVoice: "bassel",
   openCall: true,
+  mediaStream: null,
+  recorder: null,
+  recChunks: [],
+  recActive: false,
+  vadTimer: null,
+  recT0: 0,
   actx: null,
 };
 
