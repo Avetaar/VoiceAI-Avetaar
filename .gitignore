@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+backend/certs/
+backend/cache/
+backend/uploads/
+.DS_Store
+Thumbs.db
