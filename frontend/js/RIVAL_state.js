@@ -5,15 +5,7 @@ export const state = {
   inFlight: false,
   curVoice: "bassel",
   openCall: true,
-  mediaStream: null,
-  recorder: null,
-  recChunks: [],
-  recActive: false,
-  vadTimer: null,
-  recT0: 0,
   actx: null,
-  micAnalyser: null,
-  micFreq: null,
 };
 
 export function ensureAudioCtx() {

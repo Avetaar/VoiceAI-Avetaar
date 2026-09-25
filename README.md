@@ -5,13 +5,15 @@
 # VoiceAI Avetaar
 
 **Avetaar** is a browser-based voice assistant on the local network:
-Record a voice message (via mic or by uploading a file) and it gets understood,
+press the mic and speak — the browser understands you directly (no model download, no ffmpeg),
 and Avetaar replies with **text and voice** in the Iraqi dialect.
 It comes with an animated **plexus face** that speaks along with the voice.
 
 - LLM: GPT-Realtime (text only — fastest)
 - Voice: Edge TTS with authentic Iraqi voices (Bassel / Rana / Salma / Shakir / Zariya)
-- Understanding: faster-whisper on the server (supports all voice-recording formats from phones)
+- Understanding: built into the browser (Web Speech API) — nothing to download
+
+No large models. No ffmpeg. Only four small libraries.
 
 ## How to run (any environment — Windows / Termux / Linux)
 
@@ -24,28 +26,30 @@ git clone https://github.com/Avetaar/VoiceAI-Avetaar && python VoiceAI-Avetaar/A
 On Termux:
 
 ```
-pkg install git python-ffmpeg && git clone https://github.com/Avetaar/VoiceAI-Avetaar && python VoiceAI-Avetaar/Avetaar.py
+pkg install git python && git clone https://github.com/Avetaar/VoiceAI-Avetaar && python VoiceAI-Avetaar/Avetaar.py
 ```
 
 The launcher installs the required libraries automatically, starts the site,
 prints the link in the terminal and opens it in the browser —
 copy the link into Chrome on any device and talk with Avetaar.
 
+Speech understanding needs Chrome/Chromium (Web Speech API). Open the link in Chrome.
+
 ## Structure
 
 ```
-VoiceAI/
+VoiceAI-Avetaar/
 ├── Avetaar.py               Smart launch (install → run → show link)
 ├── RIVAL_requirements.txt
 ├── AVETAAR.md               Identity and rights
 ├── README.md
+├── RIVAL_banner.png
 ├── backend/
 │   ├── RIVAL_app.py         Flask + endpoints
 │   ├── RIVAL_config.py      Settings
 │   ├── RIVAL_cert.py        Self-signed HTTPS certificate
 │   ├── RIVAL_llm.py         GPT-Realtime reply
 │   ├── RIVAL_tts.py         Edge TTS voice
-│   ├── RIVAL_stt.py         Whisper understanding
 │   └── RIVAL_sessions.py    Conversation memory
 └── frontend/
     ├── RIVAL_index.html

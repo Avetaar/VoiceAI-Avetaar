@@ -12,7 +12,6 @@ import RIVAL_config
 import RIVAL_cert
 import RIVAL_llm
 import RIVAL_sessions
-import RIVAL_stt
 import RIVAL_tts
 
 app = Flask(__name__)
@@ -45,20 +44,6 @@ def health():
 @app.post("/api/session")
 def session():
     return jsonify({"session": RIVAL_sessions.create()})
-
-
-@app.post("/api/stt")
-def stt_route():
-    upload = request.files.get("audio")
-    if upload is None:
-        return jsonify({"error": "no audio"}), 400
-    os.makedirs(RIVAL_config.UPLOAD_DIR, exist_ok=True)
-    tmp = os.path.join(RIVAL_config.UPLOAD_DIR, uuid.uuid4().hex + os.path.splitext(upload.filename)[1])
-    upload.save(tmp)
-    try:
-        return jsonify(RIVAL_stt.transcribe(tmp))
-    except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
 
 
 @app.get("/api/preview/<voice_key>")
@@ -101,7 +86,6 @@ def talk():
 
 def serve():
     cert, key = RIVAL_cert.ensure_certs()
-    threading.Thread(target=RIVAL_stt.preload, daemon=True).start()
     app.run(host=RIVAL_config.HOST, port=RIVAL_config.PORT, ssl_context=(cert, key))
 
 

@@ -1,7 +1,7 @@
 # VoiceAI Avetaar
 
 **Avetaar** is a voice assistant from the browser for the local network:
-Record a voice message (mic or file) and it's understood by STT,
+press the mic and speak — the browser understands you directly,
 and Avetaar responds in text and voice in Iraqi dialect,
 with a dynamic plexus face that speaks along with the voice.
 
@@ -29,7 +29,6 @@ copy the link to Chrome and you can talk with Avetaar.
 ## Third-party attribution (unchanged)
 
 - Flask — MIT
-- faster-whisper — MIT
 - edge-tts — MIT
 - cryptography — Apache-2.0 / BSD
 - GPT-Realtime — external service

@@ -4,7 +4,6 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 CERT_DIR = os.path.join(ROOT_DIR, "backend", "certs")
 PREVIEW_DIR = os.path.join(ROOT_DIR, "backend", "cache")
-UPLOAD_DIR = os.path.join(ROOT_DIR, "backend", "uploads")
 
 HOST = "0.0.0.0"
 PORT = 8000

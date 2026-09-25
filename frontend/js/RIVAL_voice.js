@@ -1,152 +1,107 @@
-import { state, ensureAudioCtx, toast } from "./RIVAL_state.js";
-import { addText, voiceWidget, driveMouth } from "./RIVAL_chat.js";
+import { state, toast } from "./RIVAL_state.js";
+import { addText } from "./RIVAL_chat.js";
 import { face } from "./RIVAL_face.js";
-import { aiReply, sttBlob } from "./RIVAL_api.js";
+import { aiReply } from "./RIVAL_api.js";
 
 const micBtn = document.getElementById("micBtn");
 
-function pickMime() {
-  const opts = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
-  if (!window.MediaRecorder) return "";
-  for (const o of opts) if (MediaRecorder.isTypeSupported(o)) return o;
-  return "";
-}
-
-async function ensureStream() {
-  ensureAudioCtx();
-  if (state.mediaStream) return state.mediaStream;
-  state.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  if (state.actx) {
-    state.micAnalyser = state.actx.createAnalyser();
-    state.micAnalyser.fftSize = 512;
-    state.actx.createMediaStreamSource(state.mediaStream).connect(state.micAnalyser);
-    state.micFreq = new Uint8Array(state.micAnalyser.frequencyBinCount);
-  }
-  return state.mediaStream;
-}
-
-function startRec() {
-  state.recChunks = [];
-  state.recActive = true;
-  state.recorder = new MediaRecorder(state.mediaStream, pickMime() ? { mimeType: pickMime() } : {});
-  state.recorder.ondataavailable = (e) => {
-    if (e.data && e.data.size) state.recChunks.push(e.data);
-  };
-  state.recorder.start(250);
-}
-
-function stopRec() {
-  try {
-    if (state.recorder && state.recorder.state !== "inactive") state.recorder.stop();
-  } catch {
-    state.recorder = null;
-  }
-  state.recActive = false;
-}
-
-function stopVad() {
-  if (state.vadTimer) clearInterval(state.vadTimer);
-  state.vadTimer = null;
-}
-
-export async function finalizeRecording() {
-  stopVad();
-  stopRec();
-  micBtn.classList.remove("listening");
-  if (state.inFlight) {
-    toast("لحظة — بانتظار الرد");
-    return;
-  }
-  await new Promise((r) => setTimeout(r, 450));
-  const blob = new Blob(state.recChunks, { type: pickMime() || "audio/webm" });
-  state.recChunks = [];
-  if (blob.size < 2000) {
-    toast("ما سمعت كلامك — سجّل ثانية");
-    face.setState("بانتظار كلامك");
-    return;
-  }
-
-  const url = URL.createObjectURL(blob);
-  const { bubble, t } = addText("you", "");
-  t.textContent = "⏳ أفهم كلامك…";
-  t.classList.add("pending");
-  const userAudio = voiceWidget(bubble, "رسالتك الصوتية", url, false);
-
-  try {
-    const sd = await sttBlob(blob);
-    const q = (sd.text || "").trim();
-    if (sd.error) throw new Error(sd.error);
-    if (!q) {
-      t.textContent = "⚠️ ما فهمت كلامك — حاول أوضح أو اكتب";
-      face.setState("");
-      return;
-    }
-    t.textContent = q;
-    t.classList.remove("pending");
-    state.inFlight = true;
-    await aiReply(q);
-    state.inFlight = false;
-  } catch (err) {
-    t.textContent = "⚠️ " + err.message;
-    t.classList.remove("pending");
-    face.setState("");
-  }
-  driveMouth(userAudio, face.setSpeaking);
-}
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 export function wireMic() {
+  if (!SpeechRecognition) {
+    toast("المتصفح ما يدعم الفهم المباشر — جرّب Chrome");
+    return;
+  }
+  const recognition = new SpeechRecognition();
+  recognition.lang = "ar";
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  let finalText = "";
+  let active = false;
+  let bubble = null;
+  let textEl = null;
+
+  recognition.onresult = (e) => {
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) finalText += r[0].transcript + " ";
+      else interim += r[0].transcript;
+    }
+    const all = (finalText + interim).trim();
+    if (!bubble) {
+      const created = addText("you", "");
+      bubble = created.bubble;
+      textEl = created.t;
+      textEl.classList.add("pending");
+    }
+    textEl.textContent = all || "⏳ أسمعك…";
+    face.setState("أسمع كلامك…", true);
+  };
+
+  recognition.onend = () => {
+    if (active) {
+      try {
+        recognition.start();
+      } catch {
+        active = false;
+      }
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === "not-allowed") {
+      toast("ماكو إذن مايك — شغّل الأذن من المتصفح");
+      active = false;
+      micBtn.classList.remove("listening");
+    }
+  };
+
   micBtn.onclick = () => {
-    if (state.recActive) {
-      face.setState("أفهم كلامك…", true);
-      finalizeRecording();
+    if (active) {
+      active = false;
+      try {
+        recognition.stop();
+      } catch {
+        recognition = null;
+      }
+      const q = (finalText || "").trim();
+      finalText = "";
+      if (!q) {
+        if (textEl) {
+          textEl.textContent = "⚠️ ما سمعت كلامك — جرّب ثانية";
+          textEl.classList.remove("pending");
+        }
+        face.setState("");
+        toast("ما سمعت كلامك — سجّل ثانية");
+      } else {
+        textEl.textContent = q;
+        textEl.classList.remove("pending");
+        state.inFlight = true;
+        aiReply(q).then(() => {
+          state.inFlight = false;
+        });
+      }
+      bubble = null;
+      textEl = null;
+      micBtn.classList.remove("listening");
       return;
     }
-    ensureStream()
-      .then(() => {
-        state.recT0 = Date.now();
-        startRec();
-        micBtn.classList.add("listening");
-        face.setState("تكلّم — وأنا أسمعك", true);
-        state.vadTimer = setInterval(() => {
-          if (Date.now() - state.recT0 > 30000) finalizeRecording();
-        }, 1000);
-      })
-      .catch((e) => toast("ماكو إذن مايك: " + e.message));
+    if (state.inFlight) {
+      toast("لحظة — بانتظار الرد");
+      return;
+    }
+    active = true;
+    finalText = "";
+    try {
+      recognition.start();
+    } catch {
+      active = false;
+    }
+    micBtn.classList.add("listening");
+    face.setState("تكلّم — وأنا أسمعك", true);
   };
 }
 
-export function wireUpload(upBtn, upFile) {
-  upBtn.onclick = () => {
-    ensureAudioCtx();
-    upFile.click();
-  };
-  upFile.onchange = async () => {
-    const f = upFile.files[0];
-    upFile.value = "";
-    if (!f || state.inFlight) return;
-    const url = URL.createObjectURL(f);
-    const { bubble, t } = addText("you", "");
-    t.textContent = "⏳ أفهم كلامك…";
-    t.classList.add("pending");
-    const userAudio = voiceWidget(bubble, "رسالتك الصوتية", url, false);
-    state.inFlight = true;
-    try {
-      const sd = await sttBlob(f, f.name);
-      const q = (sd.text || "").trim();
-      if (sd.error) throw new Error(sd.error);
-      if (!q) {
-        t.textContent = "⚠️ ما فهمت الكلام في الملف — سجّل أوضح أو اكتب";
-        t.classList.remove("pending");
-        return;
-      }
-      t.textContent = q;
-      t.classList.remove("pending");
-      await aiReply(q);
-    } catch (err) {
-      t.textContent = "⚠️ " + err.message;
-      t.classList.remove("pending");
-    }
-    state.inFlight = false;
-    driveMouth(userAudio, face.setSpeaking);
-  };
-}
+export function wireUpload() {}

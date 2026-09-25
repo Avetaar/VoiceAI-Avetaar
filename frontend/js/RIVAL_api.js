@@ -12,13 +12,6 @@ export async function ensureSession() {
   return state.session;
 }
 
-export async function sttBlob(blob, name = "rec.webm") {
-  const fd = new FormData();
-  fd.append("audio", blob, name);
-  const res = await fetch(API + "/api/stt", { method: "POST", body: fd });
-  return res.json();
-}
-
 export async function aiReply(question) {
   ensureAudioCtx();
   const typing = typingRow();

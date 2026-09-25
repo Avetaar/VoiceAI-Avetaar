@@ -1,17 +1,15 @@
 import importlib.util
 import os
 import platform
-import shutil
 import socket
 import subprocess
 import sys
-import threading
 import webbrowser
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 BACKEND = os.path.join(ROOT, "backend")
 REQUIREMENTS = os.path.join(ROOT, "RIVAL_requirements.txt")
-MODULES = ["flask", "requests", "edge_tts", "faster_whisper", "cryptography"]
+MODULES = ["flask", "requests", "edge_tts", "cryptography"]
 
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -46,7 +44,7 @@ def is_termux():
 def termux_prep():
     if is_termux():
         print("  " + DIM + "Termux — system preparation ...")
-        subprocess.run(["pkg", "install", "-y", "python-numpy", "python-pip", "ffmpeg"])
+        subprocess.run(["pkg", "install", "-y", "python-pip"])
 
 
 def missing_modules():
@@ -60,15 +58,6 @@ def install_dependencies():
     if result.returncode != 0:
         warn("Installation failed — check internet and retry")
         sys.exit(1)
-
-
-def ensure_ffmpeg():
-    if shutil.which("ffmpeg"):
-        return True
-    if is_termux():
-        subprocess.run(["pkg", "install", "-y", "ffmpeg"])
-        return shutil.which("ffmpeg") is not None
-    return False
 
 
 def lan_ip():
@@ -102,18 +91,12 @@ def main():
             sys.exit(1)
     else:
         ok("المكتبات جاهزة")
-    if ensure_ffmpeg():
-        ok("ffmpeg")
-    else:
-        warn("ffmpeg غير موجود — بعض صيغ الصوت بالجوال ما تكدر تتفهم")
 
     sys.path.insert(0, BACKEND)
     import RIVAL_app
-    import RIVAL_stt
 
     url = "https://" + lan_ip() + ":8000"
-    print("  " + DIM + "تجهيز الشهادة ونموذج الصوت ...")
-    threading.Thread(target=RIVAL_stt.preload, daemon=True).start()
+    print("  " + DIM + "تجهيز الشهادة ...")
 
     link_block(url)
 
