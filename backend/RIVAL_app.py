@@ -49,6 +49,8 @@ def session():
 
 @app.post("/api/stt")
 def stt_route():
+    if not RIVAL_stt.available():
+        return jsonify({"error": "stt offline"}), 503
     upload = request.files.get("audio")
     if upload is None:
         return jsonify({"error": "no audio"}), 400
@@ -101,7 +103,8 @@ def talk():
 
 def serve():
     cert, key = RIVAL_cert.ensure_certs()
-    threading.Thread(target=RIVAL_stt.preload, daemon=True).start()
+    if RIVAL_stt.available():
+        threading.Thread(target=RIVAL_stt.preload, daemon=True).start()
     app.run(host=RIVAL_config.HOST, port=RIVAL_config.PORT, ssl_context=(cert, key))
 
 

@@ -9,11 +9,12 @@ press the mic and speak — the browser understands you directly (no model downl
 and Avetaar replies with **text and voice** in the Iraqi dialect.
 It comes with an animated **plexus face** that speaks along with the voice.
 
-- LLM: GPT-Realtime (text only — fastest)
+- LLM: free keyless provider (auto sign-up, cached token) with automatic fallback — no API key needed
 - Voice: Edge TTS with authentic Iraqi voices (Bassel / Rana / Salma / Shakir / Zariya)
 - Understanding: built into the browser (Web Speech API) — nothing to download
+- Optional: if you install `faster-whisper` on the server machine, audio is also understood server-side
 
-No large models. No ffmpeg. Only four small libraries.
+No large models. No ffmpeg. No API keys. Only four small libraries.
 
 ## How to run (any environment — Windows / Termux / Linux)
 

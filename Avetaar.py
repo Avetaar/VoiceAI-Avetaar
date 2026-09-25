@@ -9,7 +9,7 @@ import webbrowser
 ROOT = os.path.dirname(os.path.abspath(__file__))
 BACKEND = os.path.join(ROOT, "backend")
 REQUIREMENTS = os.path.join(ROOT, "RIVAL_requirements.txt")
-MODULES = ["flask", "requests", "edge_tts", "cryptography", "faster_whisper"]
+MODULES = ["flask", "requests", "edge_tts", "cryptography"]
 
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -97,8 +97,8 @@ def main():
 
     url = "https://" + lan_ip() + ":8000"
     print("  " + DIM + "تجهيز الشهادة ...")
-    print("  " + DIM + "أول تشغيل: يجهّز نموذج الفهم (tiny) مرة وحدة في كاش الجهاز — بعد هاذا يعمل بدون إنترنت.")
-    print("  " + DIM + "الجوال لا ينزل أي شيء، ويصعد صوته لكى هنا.")
+    print("  " + DIM + "STT: على الجوال يفهم كلامك متصفحك مباشرة (كروم/أندرويد) — بدون أي تحميل.")
+    print("  " + DIM + "اختياري: لو ركّبت faster-whisper على جهازك، يفهم السيرفر الصوت أيضاً.")
 
     link_block(url)
 

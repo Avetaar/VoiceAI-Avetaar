@@ -4,7 +4,112 @@ import { face } from "./RIVAL_face.js";
 import { aiReply, sttBlob } from "./RIVAL_api.js";
 
 const micBtn = document.getElementById("micBtn");
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const BROWSER_MODE = !!SR;
 
+async function sendUserText(q) {
+  state.inFlight = true;
+  await aiReply(q);
+  state.inFlight = false;
+}
+
+// ---------------- Mode A: browser STT (zero download) ----------------
+let bRec = null;
+let bActive = false;
+let bFinal = "";
+let bBubble = null;
+let bText = null;
+
+function bSend() {
+  const q = bFinal.trim();
+  bFinal = "";
+  if (bText) {
+    bText.classList.remove("pending");
+  }
+  bBubble = null;
+  bText = null;
+  if (!q) {
+    toast("ما سمعت كلامك — سجّل ثانية");
+    face.setState("");
+    return;
+  }
+  sendUserText(q);
+}
+
+function bStart() {
+  if (state.inFlight) {
+    toast("لحظة — بانتظار الرد");
+    return;
+  }
+  bActive = true;
+  bFinal = "";
+  try {
+    bRec.start();
+  } catch {
+    bActive = false;
+    return;
+  }
+  micBtn.classList.add("listening");
+  face.setState("تكلّم — وأنا أسمعك", true);
+}
+
+function bStop() {
+  bActive = false;
+  try {
+    bRec.stop();
+  } catch {
+    bRec = null;
+  }
+  micBtn.classList.remove("listening");
+  bSend();
+}
+
+function wireBrowser() {
+  bRec = new SR();
+  bRec.lang = "ar";
+  bRec.continuous = true;
+  bRec.interimResults = true;
+  bRec.onresult = (e) => {
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) bFinal += r[0].transcript + " ";
+      else interim += r[0].transcript;
+    }
+    const all = (bFinal + interim).trim();
+    if (!bBubble) {
+      const c = addText("you", "");
+      bBubble = c.bubble;
+      bText = c.t;
+      bText.classList.add("pending");
+    }
+    bText.textContent = all || "⏳ أسمعك…";
+    face.setState("أسمع كلامك…", true);
+  };
+  bRec.onend = () => {
+    if (bActive) {
+      try {
+        bRec.start();
+      } catch {
+        bActive = false;
+        micBtn.classList.remove("listening");
+      }
+    }
+  };
+  bRec.onerror = (e) => {
+    if (e.error === "not-allowed") {
+      toast("ماكو إذن مايك — شغّل الأذن من المتصفح");
+      bActive = false;
+      micBtn.classList.remove("listening");
+    }
+  };
+  micBtn.onclick = () => {
+    if (bActive) bStop();
+    else bStart();
+  };
+}
+
+// ---------------- Mode B: server STT (MediaRecorder + /api/stt) ----------------
 function pickMime() {
   const opts = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
   if (!window.MediaRecorder) return "";
@@ -61,9 +166,7 @@ async function sendBlob(blob, fileName) {
     }
     t.textContent = q;
     t.classList.remove("pending");
-    state.inFlight = true;
-    await aiReply(q);
-    state.inFlight = false;
+    await sendUserText(q);
   } catch (err) {
     t.textContent = "⚠️ " + err.message;
     t.classList.remove("pending");
@@ -72,7 +175,7 @@ async function sendBlob(blob, fileName) {
   driveMouth(userAudio, face.setSpeaking);
 }
 
-export async function finalizeRecording() {
+async function finalizeRecording() {
   stopVad();
   stopRec();
   micBtn.classList.remove("listening");
@@ -92,17 +195,39 @@ export async function finalizeRecording() {
   await sendBlob(blob, "rec.webm");
 }
 
-export function wireMic() {
+function wireServer() {
   micBtn.onclick = () => {
     if (state.recActive) {
       finalizeRecording();
       return;
     }
-    startAuto(false);
+    ensureStream()
+      .then(() => {
+        state.recT0 = Date.now();
+        startRec();
+        micBtn.classList.add("listening");
+        face.setState("تكلّم — وأنا أسمعك", true);
+        state.vadTimer = setInterval(() => {
+          if (Date.now() - state.recT0 > 30000) finalizeRecording();
+        }, 1000);
+      })
+      .catch((e) => toast("ماكو إذن مايك: " + e.message));
   };
 }
 
+// ---------------- unified ----------------
+export function wireMic() {
+  if (BROWSER_MODE) wireBrowser();
+  else wireServer();
+}
+
 export function startAuto(manual) {
+  if (BROWSER_MODE) {
+    if (bActive || state.inFlight) return;
+    bStart();
+    if (manual) micBtn.classList.add("listening");
+    return;
+  }
   ensureStream()
     .then(() => {
       state.recT0 = Date.now();

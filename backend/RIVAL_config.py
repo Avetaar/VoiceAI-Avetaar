@@ -11,7 +11,7 @@ PORT = 8000
 
 LLM_API = "https://gptrealtime2.ai/api/generate"
 LLM_HEADERS = {"Content-Type": "application/json", "user-agent": "Mozilla/5.0"}
-LLM_MODEL = os.environ.get("RIVAL_LLM_MODEL", "dark.ps/deepseek-v3")
+LLM_MODEL = os.environ.get("RIVAL_LLM_MODEL", "deepseek/deepseek-v3.2")
 
 RIVAL_PROXY = os.environ.get("RIVAL_PROXY", "").strip()
 PROXIES = dict.fromkeys(("http", "https"), "http://" + RIVAL_PROXY) if RIVAL_PROXY else None

@@ -2,4 +2,3 @@ flask
 requests
 edge-tts
 cryptography
-faster-whisper

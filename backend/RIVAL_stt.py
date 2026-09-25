@@ -1,9 +1,28 @@
 import os
-import subprocess
 import threading
 
 _lock = threading.Lock()
 _model = None
+
+
+def _cached_model():
+    hub = os.path.join(os.environ.get("HF_HOME") or os.path.join(os.path.expanduser("~"), ".cache", "huggingface"), "hub")
+    if not os.path.isdir(hub):
+        return None
+    for entry in sorted(os.listdir(hub)):
+        if entry.startswith("models--Systran--faster-whisper"):
+            return entry.split("--")[-1]
+    return None
+
+
+def available():
+    if os.environ.get("RIVAL_STT", "").strip().lower() == "off":
+        return False
+    try:
+        import faster_whisper  # noqa
+    except ImportError:
+        return False
+    return _cached_model() is not None
 
 
 def get_model():
@@ -12,44 +31,29 @@ def get_model():
         if _model is None:
             from faster_whisper import WhisperModel
 
-            _model = WhisperModel("tiny", device="cpu", compute_type="int8")
+            name = _cached_model()
+            if name is None:
+                raise RuntimeError("stt model not cached")
+            _model = WhisperModel(name, device="cpu", compute_type="int8")
     return _model
-
-
-def _to_wav(audio_path):
-    wav = audio_path + ".wav"
-    proc = subprocess.run(
-        ["ffmpeg", "-y", "-i", audio_path, "-ar", "16000", "-ac", "1", wav],
-        capture_output=True,
-        timeout=40,
-    )
-    if proc.returncode == 0 and os.path.exists(wav):
-        return wav
-    return audio_path
 
 
 def transcribe(audio_path):
     model = get_model()
-    wav = _to_wav(audio_path)
-    try:
-        segments, info = model.transcribe(wav, language="ar", vad_filter=True)
-        text = " ".join(s.text for s in segments).strip()
-    except Exception:
-        segments, info = model.transcribe(wav, language="ar")
-        text = " ".join(s.text for s in segments).strip()
+    segments, info = model.transcribe(audio_path, language="ar", vad_filter=True)
+    text = " ".join(s.text for s in segments).strip()
     duration = round(info.duration, 1) if info and info.duration else 0
-    for path in (audio_path, wav):
-        try:
-            if os.path.exists(path):
-                os.remove(path)
-        except OSError:
-            pass
+    try:
+        if os.path.exists(audio_path):
+            os.remove(audio_path)
+    except OSError:
+        pass
     return {"text": text, "seconds": duration}
 
 
 def preload():
     try:
         get_model()
-        print("  " + "stt model ready")
+        print("  " + "stt ready")
     except Exception as exc:
         print("  " + "stt preload failed: " + str(exc))
