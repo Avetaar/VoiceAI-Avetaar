@@ -3,4 +3,5 @@ __pycache__/
 backend/certs/
 backend/cache/
 backend/uploads/
+.cache/
 *.log
